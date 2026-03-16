@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+cv_api.egg-info/PKG-INFO
+cv_api.egg-info/SOURCES.txt
+cv_api.egg-info/dependency_links.txt
+cv_api.egg-info/requires.txt
+cv_api.egg-info/top_level.txt

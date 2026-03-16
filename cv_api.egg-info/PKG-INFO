@@ -1,0 +1,159 @@
+Metadata-Version: 2.4
+Name: cv-api
+Version: 0.1.0
+Summary: Computer vision API with FastAPI and ResNet18 on CIFAR-10
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi[standard]>=0.135.1
+Requires-Dist: uvicorn>=0.41.0
+Requires-Dist: pydantic>=2.12.0
+Requires-Dist: pydantic-settings>=2.3.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: torch
+Requires-Dist: torchvision
+Requires-Dist: pillow>=10.0.0
+
+# CV API - ResNet18 on CIFAR-10
+
+API de visión por computadora que entrena y expone un modelo **ResNet18** (pre-entrenado en ImageNet y ajustado con **CIFAR-10**) mediante **FastAPI**.
+
+---
+
+## 1. Requisitos
+
+Estar en la carpeta del proyecto:
+
+```powershell
+cd "C:\Users\josep\OneDrive\Desktop\Courses\Alterna\Alterna Academy\Modulo 11\tarea 2\cv-api"
+```
+
+Python 3.12 instalado y `pip` funcionando.
+
+---
+
+## 2. Instalar dependencias
+
+```powershell
+pip install -e .
+```
+
+Esto usa `pyproject.toml` para instalar:
+- FastAPI + Uvicorn
+- pydantic-settings
+- PyTorch + torchvision
+- Pillow (PIL) para manejo de imágenes
+
+---
+
+## 3. Configuración (.env)
+
+Hay una plantilla lista:
+
+```text
+.env.example
+```
+
+Cópiala a `.env` (puedes hacerlo en PowerShell):
+
+```powershell
+copy .env.example .env
+```
+
+Valores por defecto:
+
+- `MODEL_PATH=saved_models/resnet18_cifar10.pt`
+- `UVICORN_HOST=0.0.0.0`
+- `UVICORN_PORT=8000`
+
+Normalmente no necesitas cambiarlos para hacer la tarea.
+
+---
+
+## 4. Entrenar el modelo
+
+Este paso **descarga CIFAR-10** y entrena una **ResNet18** (fine-tuning ligero) sobre ese dataset.
+
+```powershell
+python train.py
+```
+
+Qué hace `train.py`:
+- Descarga CIFAR-10 (10 clases: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck).
+- Aplica transforms (resize, crop, normalización) compatibles con ResNet18.
+- Entrena unas pocas épocas en CPU.
+- Guarda los pesos y las clases en:
+
+```text
+saved_models/resnet18_cifar10.pt
+```
+
+Debes ver al final algo como:
+
+```text
+Model saved to saved_models/resnet18_cifar10.pt
+```
+
+---
+
+## 5. Ejecutar la API
+
+Con el modelo ya entrenado:
+
+```powershell
+python main.py
+```
+
+La API se levanta en (por defecto):
+
+- `http://127.0.0.1:8000/`
+- Documentación interactiva (Swagger): `http://127.0.0.1:8000/docs`
+
+### Endpoints principales
+
+- `GET /`  
+  Devuelve un mensaje de bienvenida.
+
+- `GET /health`  
+  Intenta cargar el modelo desde `MODEL_PATH`.  
+  Si responde con `{"status": "ok", ...}` la API está lista para predecir.
+
+- `POST /predict`  
+  Recibe una **imagen** vía `multipart/form-data` (por ejemplo, desde Swagger UI) y devuelve:
+
+  ```json
+  {
+    "filename": "ejemplo.png",
+    "class_index": 3,
+    "class_name": "cat",
+    "probability": 0.87
+  }
+  ```
+
+---
+
+## 6. Probar predicción desde Swagger
+
+1. Abre `http://127.0.0.1:8000/docs` en el navegador.
+2. Busca el endpoint `POST /predict`.
+3. Pulsa en **Try it out**.
+4. En el campo `file` sube una imagen (por ejemplo, una imagen pequeña tipo CIFAR-10: objetos sencillos).
+5. Pulsa **Execute**.
+
+Verás la respuesta JSON con:
+- `class_name`: una de las clases de CIFAR-10.
+- `probability`: probabilidad (softmax) de esa clase.
+
+---
+
+## 7. Resumen para la tarea
+
+1. **Entrenar** el modelo:
+   - `pip install -e .`
+   - `copy .env.example .env`
+   - `python train.py`
+2. **Exponer el modelo vía REST API**:
+   - `python main.py`
+   - Probar `GET /health` y `POST /predict` (subiendo una imagen) desde `http://127.0.0.1:8000/docs`.
+
+Con esto cumples el requisito de la tarea: **entrenar un modelo de ML de computer vision y exponerlo mediante una API REST con FastAPI**.
+
