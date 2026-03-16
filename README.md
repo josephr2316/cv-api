@@ -128,7 +128,7 @@ El archivo `.env` contiene:
 
 ```env
 MODEL_PATH=saved_models/resnet18_cifar10.pt
-UVICORN_HOST=0.0.0.0
+UVICORN_HOST=127.0.0.1
 UVICORN_PORT=8000
 ```
 
