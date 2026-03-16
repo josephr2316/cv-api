@@ -1,43 +1,43 @@
-# CV API — Clasificación de Imágenes con ResNet18
+# CV API — Image Classification with ResNet18
 
-API REST de **visión por computadora** construida con **FastAPI** y **PyTorch**. Toma una imagen como entrada y devuelve la categoría que el modelo reconoce en ella, junto con el nivel de confianza de la predicción.
+REST API for **computer vision** built with **FastAPI** and **PyTorch**. It takes an image as input and returns the predicted class along with its confidence.
 
 ---
 
-## ¿Qué hace este proyecto?
+## What does this project do?
 
-El sistema entrena un modelo de red neuronal convolucional (**ResNet18**) para reconocer objetos en imágenes y lo expone como una API web. El flujo completo es:
+The system trains a convolutional neural network (**ResNet18**) to recognize objects in images and exposes it as a web API. The full flow is:
 
 ```
-Usuario sube imagen  →  API procesa con ResNet18  →  Devuelve clase + confianza
+User uploads image  →  API processes it with ResNet18  →  Returns class + confidence
 ```
 
-Por ejemplo:
-- Subes una foto de un **avión** → responde `"airplane"` con 94% de confianza
-- Subes una foto de un **perro** → responde `"dog"` con 88% de confianza
+For example:
+- You upload a photo of an **airplane** → it responds `"airplane"` with 94% confidence
+- You upload a photo of a **dog** → it responds `"dog"` with 88% confidence
 
-### Clases que puede reconocer
+### Classes it can recognize
 
-El modelo fue entrenado con el dataset **CIFAR-10**, que contiene 10 categorías:
+The model is trained on the **CIFAR-10** dataset, which contains 10 categories:
 
-| Clase | Descripción |
+| Class | Description |
 |-------|-------------|
-| `airplane` | Avión |
-| `automobile` | Carro / Automóvil |
-| `bird` | Pájaro |
-| `cat` | Gato |
-| `deer` | Venado |
-| `dog` | Perro |
-| `frog` | Rana |
-| `horse` | Caballo |
-| `ship` | Barco |
-| `truck` | Camión |
+| `airplane` | Airplane |
+| `automobile` | Car / Automobile |
+| `bird` | Bird |
+| `cat` | Cat |
+| `deer` | Deer |
+| `dog` | Dog |
+| `frog` | Frog |
+| `horse` | Horse |
+| `ship` | Ship / Boat |
+| `truck` | Truck |
 
-> **Nota:** El modelo solo puede clasificar dentro de estas 10 categorías. Si subes una imagen de un objeto que no está en esta lista (un vaso, una silla, etc.), el modelo devolverá la categoría más parecida de las disponibles, pero no garantiza precisión. Ver la sección [Sugerencias para ampliar el modelo](#sugerencias-para-ampliar-el-modelo) al final de este documento.
+> **Note:** The model can only classify within these 10 categories. If you upload an image of an object that is not in this list (a cup, a chair, etc.), the model will still return the closest class among these 10, but the prediction may not be meaningful. See [Suggestions to extend the model](#suggestions-to-extend-the-model) at the end of this document.
 
 ---
 
-## Arquitectura del proyecto
+## Project architecture
 
 ```
 cv-api/
@@ -53,78 +53,78 @@ cv-api/
     └── resnet18_cifar10.pt  # Pesos del modelo entrenado
 ```
 
-### Tecnologías utilizadas
+### Technologies used
 
-| Tecnología | Rol |
+| Technology | Role |
 |-----------|-----|
-| **Python 3.12** | Lenguaje base |
-| **PyTorch** | Framework de deep learning |
-| **torchvision** | Dataset CIFAR-10 y modelo ResNet18 |
-| **FastAPI** | Framework web para la API REST |
-| **Uvicorn** | Servidor ASGI de alta performance |
-| **Pydantic Settings** | Gestión de configuración mediante `.env` |
-| **Pillow** | Procesamiento de imágenes |
+| **Python 3.12** | Base language |
+| **PyTorch** | Deep learning framework |
+| **torchvision** | CIFAR-10 dataset and ResNet18 model |
+| **FastAPI** | Web framework for the REST API |
+| **Uvicorn** | High-performance ASGI server |
+| **Pydantic Settings** | Configuration management via `.env` |
+| **Pillow** | Image processing |
 
 ---
 
-## ¿Cómo funciona el modelo?
+## How does the model work?
 
-### ResNet18 con Transfer Learning
+### ResNet18 with transfer learning
 
-Se utiliza **ResNet18**, una red neuronal profunda con 18 capas que fue pre-entrenada en **ImageNet** (1.2 millones de imágenes, 1000 clases). En lugar de entrenar desde cero, se aplica **transfer learning** (fine-tuning):
+The project uses **ResNet18**, a deep convolutional network with 18 layers that was pre-trained on **ImageNet** (1.2M images, 1000 classes). Instead of training from scratch, we apply **transfer learning** (fine-tuning):
 
-1. Se toma ResNet18 con sus pesos pre-entrenados en ImageNet.
-2. Se reemplaza la capa final (que tenía 1000 salidas) por una nueva con **10 salidas** (una por clase de CIFAR-10).
-3. Se entrena el modelo completo con las imágenes de CIFAR-10 durante algunas épocas.
+1. Start from ResNet18 with its pre-trained ImageNet weights.
+2. Replace the final fully-connected layer (originally 1000 outputs) with a new one with **10 outputs** (one per CIFAR-10 class).
+3. Train the whole model on CIFAR-10 images for a few epochs.
 
-Este enfoque permite obtener un modelo preciso con mucho menos tiempo y datos que entrenar desde cero.
+This approach gives good accuracy with far less data and time than training from scratch.
 
-### Pipeline de preprocesamiento
+### Preprocessing pipeline
 
-Cada imagen que llega a la API pasa por el siguiente pipeline antes de ingresar al modelo:
+Every image that reaches the API goes through the following pipeline before entering the model:
 
 ```
-Imagen original
-    → Redimensionar a 256×256 px
-    → Recorte central a 224×224 px   (tamaño que espera ResNet18)
-    → Convertir a tensor
-    → Normalizar con media y desviación estándar de ImageNet
-    → Inferencia con el modelo
-    → Softmax → probabilidades por clase
-    → Retornar la clase con mayor probabilidad
+Original image
+    → Resize to 256×256 px
+    → Center crop to 224×224 px   (size expected by ResNet18)
+    → Convert to tensor
+    → Normalize with ImageNet mean and std
+    → Run inference with the model
+    → Softmax → per-class probabilities
+    → Return the class with the highest probability
 ```
 
 ---
 
-## Instalación y configuración
+## Installation and configuration
 
-### Requisitos previos
+### Prerequisites
 
 - Python 3.12+
-- `pip` actualizado
+- Recent `pip`
 
-### 1. Instalar dependencias
+### 1. Install dependencies
 
 ```powershell
 pip install -e .
 ```
 
-Esto instala todos los paquetes definidos en `pyproject.toml`:
+This installs all packages defined in `pyproject.toml`:
 - `fastapi[standard]`
 - `uvicorn`
 - `pydantic-settings`
 - `torch` + `torchvision`
 - `pillow`
 
-### 2. Configurar variables de entorno
+### 2. Configure environment variables
 
-Copia la plantilla de configuración:
+Copy the example config:
 
 ```powershell
 copy .env.example .env
 ```
 
-El archivo `.env` contiene:
+The `.env` file contains:
 
 ```env
 MODEL_PATH=saved_models/resnet18_cifar10.pt
@@ -132,29 +132,29 @@ UVICORN_HOST=127.0.0.1
 UVICORN_PORT=8000
 ```
 
-| Variable | Descripción | Valor por defecto |
-|----------|-------------|-------------------|
-| `MODEL_PATH` | Ruta al archivo de pesos del modelo | `saved_models/resnet18_cifar10.pt` |
-| `UVICORN_HOST` | Host donde escucha el servidor | `0.0.0.0` |
-| `UVICORN_PORT` | Puerto del servidor | `8000` |
+| Variable | Description | Default value |
+|----------|-------------|---------------|
+| `MODEL_PATH` | Path to the model weights file | `saved_models/resnet18_cifar10.pt` |
+| `UVICORN_HOST` | Host where the server listens | `127.0.0.1` |
+| `UVICORN_PORT` | Server port | `8000` |
 
 ---
 
-## Entrenamiento del modelo
+## Model training
 
 ```powershell
 python train.py
 ```
 
-Este script realiza los siguientes pasos automáticamente:
+This script performs the following steps automatically:
 
-1. **Descarga CIFAR-10** (~170 MB) en la carpeta `data/`
-2. **Carga ResNet18** con pesos pre-entrenados de ImageNet
-3. **Entrena el modelo** durante 2 épocas con optimizador Adam
-4. **Evalúa la precisión** en el conjunto de prueba al final de cada época
-5. **Guarda el modelo** en `saved_models/resnet18_cifar10.pt`
+1. **Downloads CIFAR-10** (~170 MB) into the `data/` folder
+2. **Loads ResNet18** with ImageNet pre-trained weights
+3. **Trains the model** for 2 epochs with the Adam optimizer
+4. **Evaluates accuracy** on the test set after each epoch
+5. **Saves the model** to `saved_models/resnet18_cifar10.pt`
 
-### Salida esperada durante el entrenamiento
+### Expected training output
 
 ```
 Using device: cpu
@@ -163,41 +163,41 @@ Epoch 2/2 - loss: 0.5912 - test_acc: 0.7856
 Model saved to saved_models/resnet18_cifar10.pt
 ```
 
-### Tiempo estimado de entrenamiento (CPU)
+### Estimated training time (CPU)
 
-| Procesador | Tiempo por época | Total (2 épocas) |
-|-----------|-----------------|-----------------|
-| Intel i7 (11ª gen) | ~30-45 min | ~1-1.5 horas |
-| Intel i5 (10ª gen) | ~45-60 min | ~1.5-2 horas |
-| Con GPU (NVIDIA) | ~2-5 min | ~5-10 min |
+| Processor | Time per epoch | Total (2 epochs) |
+|-----------|----------------|------------------|
+| Intel i7 (11th gen) | ~30–45 min | ~1–1.5 hours |
+| Intel i5 (10th gen) | ~45–60 min | ~1.5–2 hours |
+| With GPU (NVIDIA) | ~2–5 min | ~5–10 min |
 
-> El modelo se entrena en **CPU** por defecto. Si tienes una GPU NVIDIA con CUDA instalado, PyTorch la detectará automáticamente y el entrenamiento será significativamente más rápido.
+> The model is trained on **CPU** by default. If you have an NVIDIA GPU with CUDA installed, PyTorch will detect it automatically and training will be much faster.
 
 ---
 
-## Ejecutar la API
+## Run the API
 
-Con el modelo ya entrenado:
+With the model already trained:
 
 ```powershell
 python main.py
 ```
 
-El servidor se levanta en:
+The server runs at:
 
-- **API base:** `http://127.0.0.1:8000`
-- **Documentación interactiva (Swagger UI):** `http://127.0.0.1:8000/docs`
-- **Esquema OpenAPI (JSON):** `http://127.0.0.1:8000/openapi.json`
-- **Página visual para subir imágenes:** `http://127.0.0.1:8000/upload`
+- **Base API:** `http://127.0.0.1:8000`
+- **Interactive docs (Swagger UI):** `http://127.0.0.1:8000/docs`
+- **OpenAPI schema (JSON):** `http://127.0.0.1:8000/openapi.json`
+- **Visual upload page:** `http://127.0.0.1:8000/upload`
 
 ---
 
-## Endpoints de la API
+## API endpoints
 
 ### `GET /`
-Mensaje de bienvenida. Confirma que el servidor está activo.
+Welcome message. Confirms the server is running.
 
-**Respuesta:**
+**Response:**
 ```json
 {
   "message": "Welcome to the CV API (ResNet18 on CIFAR-10)."
@@ -207,20 +207,20 @@ Mensaje de bienvenida. Confirma que el servidor está activo.
 ---
 
 ### `GET /upload`
-Devuelve una página HTML muy sencilla con un formulario para subir una imagen desde el navegador (similar a un formulario de Flask).
+Returns an HTML page with a polished form to upload an image from the browser (similar to a Flask form, but styled and with drag & drop).
 
-1. Abre `http://127.0.0.1:8000/upload`
-2. Elige un archivo de imagen
-3. Haz clic en **Classify**
+1. Open `http://127.0.0.1:8000/upload`
+2. Choose an image file (or drag & drop it)
+3. Click **Clasificar imagen / Classify**
 
-El formulario envía un `POST` a `/predict` con la imagen adjunta.
+The form sends a `POST` request to `/predict` with the image attached.
 
 ---
 
 ### `GET /health`
-Verifica que el servidor está activo **y** que el modelo se puede cargar correctamente desde disco.
+Checks that the server is running **and** that the model can be loaded correctly from disk.
 
-**Respuesta exitosa:**
+**Successful response:**
 ```json
 {
   "status": "ok",
@@ -228,7 +228,7 @@ Verifica que el servidor está activo **y** que el modelo se puede cargar correc
 }
 ```
 
-**Respuesta si el modelo no existe todavía:**
+**Response if the model does not exist yet:**
 ```json
 {
   "detail": "Error during prediction: ..."
@@ -238,12 +238,12 @@ Verifica que el servidor está activo **y** que el modelo se puede cargar correc
 ---
 
 ### `POST /predict`
-Recibe una imagen y devuelve la clase predicha por el modelo.
+Receives an image and returns the predicted class.
 
-**Parámetros:**
-- `file` *(multipart/form-data)*: Archivo de imagen (JPEG, PNG, etc.)
+**Parameters:**
+- `file` *(multipart/form-data)*: Image file (JPEG, PNG, etc.)
 
-**Respuesta exitosa:**
+**Successful response:**
 ```json
 {
   "filename": "perro.jpg",
@@ -253,41 +253,41 @@ Recibe una imagen y devuelve la clase predicha por el modelo.
 }
 ```
 
-| Campo | Tipo | Descripción |
+| Field | Type | Description |
 |-------|------|-------------|
-| `filename` | string | Nombre del archivo subido |
-| `class_index` | int | Índice de la clase (0-9) |
-| `class_name` | string | Nombre de la clase en inglés |
-| `probability` | float | Confianza del modelo (0.0 - 1.0) |
+| `filename` | string | Uploaded file name |
+| `class_index` | int | Class index (0–9) |
+| `class_name` | string | Class name (English) |
+| `probability` | float | Model confidence (0.0–1.0) |
 
-**Errores posibles:**
+**Possible errors:**
 
-| Código | Causa |
-|--------|-------|
-| `400` | El archivo no es una imagen o está vacío |
-| `500` | Error interno durante la inferencia |
-
----
-
-## Probar la API desde Swagger UI
-
-1. Asegúrate de que el servidor esté corriendo con `python main.py`
-2. Abre `http://127.0.0.1:8000/docs` en tu navegador
-3. Haz clic en **`POST /predict`** → **Try it out**
-4. En el campo `file`, selecciona una imagen desde tu computadora
-5. Haz clic en **Execute**
-6. Observa la respuesta JSON con la clase detectada y la probabilidad
+| Code | Cause |
+|------|-------|
+| `400` | File is not an image or is empty |
+| `500` | Internal error during inference |
 
 ---
 
-## Probar la API desde consola (curl)
+## Test the API from Swagger UI
+
+1. Make sure the server is running with `python main.py`
+2. Open `http://127.0.0.1:8000/docs` in your browser
+3. Click **`POST /predict`** → **Try it out**
+4. In the `file` field, select an image from your computer
+5. Click **Execute**
+6. Inspect the JSON response for predicted class and probability
+
+---
+
+## Test the API from the console (curl)
 
 ```bash
 curl -X POST http://127.0.0.1:8000/predict \
   -F "file=@ruta/a/tu/imagen.jpg"
 ```
 
-**Ejemplo de respuesta:**
+**Example response:**
 ```json
 {
   "filename": "imagen.jpg",
@@ -299,60 +299,60 @@ curl -X POST http://127.0.0.1:8000/predict \
 
 ---
 
-## Pasos completos (resumen rápido)
+## Full workflow (quick recap)
 
 ```powershell
-# 1. Instalar dependencias
+# 1. Install dependencies
 pip install -e .
 
-# 2. Crear el archivo de configuración
+# 2. Create the config file
 copy .env.example .env
 
-# 3. Entrenar el modelo (esperar ~1 hora en CPU)
+# 3. Train the model (wait ~1 hour on CPU)
 python train.py
 
-# 4. Levantar la API
+# 4. Run the API
 python main.py
 
-# 5. Probar desde el navegador
-# Página visual para subir imágenes:
+# 5. Test from the browser
+# Visual page to upload images:
 #   http://127.0.0.1:8000/upload
 #
-# (Opcional) Probar desde la documentación interactiva:
+# (Optional) Test from the interactive documentation:
 #   http://127.0.0.1:8000/docs
 ```
 
 ---
 
-## Sugerencias para ampliar el modelo
+## Suggestions to extend the model
 
-El modelo actual reconoce únicamente las **10 clases de CIFAR-10**. Si necesitas detectar objetos más variados (vasos, muebles, personas, etc.), existen estas alternativas según el nivel de esfuerzo:
+The current model only recognizes the **10 CIFAR-10 classes**. If you need to detect more diverse objects (cups, furniture, people, etc.), here are some options:
 
-### Opción 1 — Usar ResNet18 con ImageNet (1,000 clases, sin entrenamiento)
+### Option 1 — Use ResNet18 with ImageNet (1,000 classes, no training)
 
-ResNet18 ya viene pre-entrenado en ImageNet, que contiene **1,000 categorías** diferentes incluyendo objetos cotidianos. Para usar este modelo directamente (sin fine-tuning), bastaría con modificar `inference.py` para no reemplazar la capa final y utilizar las etiquetas de ImageNet.
+ResNet18 comes pre-trained on ImageNet, which contains **1,000 different categories**, including many everyday objects. To use this model directly (without fine-tuning), you would modify `inference.py` so it does not replace the final layer and uses the original ImageNet labels.
 
-**Ventaja:** No requiere entrenamiento, funciona de inmediato.  
-**Desventaja:** Las 1,000 clases tienen nombres técnicos en inglés (p.ej. `"water_jug"`, `"coffee_mug"`) y no siempre son intuitivos.
+**Pros:** No training required, works immediately.  
+**Cons:** The 1,000 classes have technical English names (e.g. `"water_jug"`, `"coffee_mug"`) and are not always intuitive.
 
-### Opción 2 — Entrenar con un dataset propio
+### Option 2 — Train with a custom dataset
 
-Si necesitas clases específicas (tu propio conjunto de objetos), puedes reemplazar CIFAR-10 por tus propias imágenes organizadas en carpetas por categoría y usar `ImageFolder` de torchvision. Necesitarías:
-- Al menos **500-1000 imágenes** por clase
-- Tiempo de entrenamiento proporcional al número de clases y tamaño del dataset
+If you need specific classes (your own object set), you can replace CIFAR-10 with your own images organized in folders per category and use `ImageFolder` from torchvision. You would typically need:
+- At least **500–1000 images** per class
+- Training time proportional to the number of classes and dataset size
 
-### Opción 3 — Modelos zero-shot (CLIP de OpenAI)
+### Option 3 — Zero-shot models (OpenAI CLIP)
 
-**CLIP** es un modelo de OpenAI que puede clasificar cualquier imagen en cualquier categoría definida en texto, sin necesidad de entrenamiento previo. Se le indica: *"¿Es esto un vaso, un carro o un edificio?"* y responde basándose en su comprensión visual y lingüística.
+**CLIP** is a model that can classify any image into any text-defined category, without additional training. You tell it: *“Is this a cup, a car, or a building?”* and it responds based on its joint visual–text understanding.
 
 ```bash
 pip install transformers
 ```
 
-Esta opción es la más flexible pero requiere más memoria RAM y tiempo de inferencia.
+This option is the most flexible but requires more RAM and longer inference times.
 
 ---
 
-## Licencia
+## License
 
-Este proyecto es de uso académico.
+This project is intended for academic use.
