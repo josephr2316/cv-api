@@ -188,6 +188,7 @@ El servidor se levanta en:
 - **API base:** `http://127.0.0.1:8000`
 - **Documentación interactiva (Swagger UI):** `http://127.0.0.1:8000/docs`
 - **Esquema OpenAPI (JSON):** `http://127.0.0.1:8000/openapi.json`
+- **Página visual para subir imágenes:** `http://127.0.0.1:8000/upload`
 
 ---
 
@@ -313,8 +314,12 @@ python train.py
 # 4. Levantar la API
 python main.py
 
-# 5. Abrir en el navegador
-# http://127.0.0.1:8000/docs
+# 5. Probar desde el navegador
+# Página visual para subir imágenes:
+#   http://127.0.0.1:8000/upload
+#
+# (Opcional) Probar desde la documentación interactiva:
+#   http://127.0.0.1:8000/docs
 ```
 
 ---
